@@ -5,6 +5,12 @@ name = "pypi"
 
 [packages]
 pygame = "*"
+matplotlib = "*"
+seaborn = "*"
+pandas = "*"
+ucimlrepo = "*"
+scikit-learn = "*"
+tensorflow = "*"
 
 [dev-packages]
 

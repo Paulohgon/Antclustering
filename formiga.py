@@ -2,6 +2,7 @@
 
 import pygame
 import random
+import datetime
 import math
 gridDisplay = pygame.display.set_mode((700, 700))
 color = (255, 0, 0)
@@ -10,6 +11,7 @@ linhas = 70
 colunas = 70
 
 matrix = [[0 for _ in range(colunas)] for _ in range(linhas)]
+matrix_folhas = [[0 for _ in range(colunas)] for _ in range(linhas)]
 
 grid_node_width = 10
 grid_node_height = 10
@@ -44,8 +46,8 @@ class Folha:
                 self.populado = True
 
 
-folhas = [Folha(matrix) for _ in range(70)]
-formigas = [Formiga(1, 2, matrix) for _ in range(10)]
+folhas = [Folha(matrix_folhas) for _ in range(500)]
+formigas = [Formiga(1, 2, matrix) for _ in range(5)]
 
 
 def createSquare(x, y, color):
@@ -58,24 +60,22 @@ def get_element(matriz, linha, coluna):
 
 
 def decide_pegar(formiga, matrix):
-    chance = (1 - formiga.aoredor / 8.0)
-    if random.uniform(0, 1) < chance and not formiga.carregando:
+    chance = (1 - 1/50 * formiga.aoredor**2)
+    if random.uniform(0, 1) <= chance and not formiga.carregando and matrix_folhas[formiga.x][formiga.y] == 2:
         formiga.carregando = True
-        matrix[formiga.x][formiga.y] = 1
+        matrix_folhas[formiga.x][formiga.y] = 0
         for folha in folhas:
             if folha.x == formiga.x and folha.y == formiga.y:
-                print("alo")
                 folha.carregada_por = formiga
                 folha.carregada = True
 
 
 def decide_largar(formiga, matrix):
-    # chance = formiga.aoredor / 7.9
-    chance = math.exp(formiga.aoredor)
-    print(chance)
-    if random.uniform(0, 6) < chance and formiga.carregando:
+    # chance = formiga.aoredor / 7.7
+    chance = 1/50 * formiga.aoredor**2
+    if random.uniform(0, 1) <= chance and formiga.carregando and matrix_folhas[formiga.x][formiga.y]!=2:
         formiga.carregando = False
-        matrix[formiga.x][formiga.y] = 2
+        matrix_folhas[formiga.x][formiga.y] = 2
 
         for folha in folhas:
             if folha.carregada_por == formiga:
@@ -87,31 +87,32 @@ def decide_largar(formiga, matrix):
 
 def get_visao(formiga, matrix):
     formiga.aoredor = 0
-    proximo = get_element(matrix, formiga.x-1, formiga.y)
-    if proximo == 2:
-        formiga.aoredor = formiga.aoredor+1
-    proximo = get_element(matrix, formiga.x+1, formiga.y)
-    if proximo == 2:
-        formiga.aoredor = formiga.aoredor+1
-    proximo = get_element(matrix, formiga.x, formiga.y-1)
-    if proximo == 2:
-        formiga.aoredor = formiga.aoredor+1
-    proximo = get_element(matrix, formiga.x, formiga.y+1)
-    if proximo == 2:
-        formiga.aoredor = formiga.aoredor+1
-    proximo = get_element(matrix, formiga.x+1, formiga.y+1)
-    if proximo == 2:
-        formiga.aoredor = formiga.aoredor+1
-    proximo = get_element(matrix, formiga.x-1, formiga.y-1)
-    if proximo == 2:
-        formiga.aoredor = formiga.aoredor+1
-    proximo = get_element(matrix, formiga.x-1, formiga.y+1)
-    if proximo == 2:
-        formiga.aoredor = formiga.aoredor+1
-    proximo = get_element(matrix, formiga.x+1, formiga.y-1)
-    if proximo == 2:
-        formiga.aoredor = formiga.aoredor+1
+    visao = 1
 
+    proximo = get_element(matrix, formiga.x-visao, formiga.y)
+    if proximo == 2:
+        formiga.aoredor = formiga.aoredor+visao
+    proximo = get_element(matrix, formiga.x+visao, formiga.y)
+    if proximo == 2:
+        formiga.aoredor = formiga.aoredor+visao
+    proximo = get_element(matrix, formiga.x, formiga.y-visao)
+    if proximo == 2:
+        formiga.aoredor = formiga.aoredor+visao
+    proximo = get_element(matrix, formiga.x, formiga.y+visao)
+    if proximo == 2:
+        formiga.aoredor = formiga.aoredor+visao
+    proximo = get_element(matrix, formiga.x+visao, formiga.y+visao)
+    if proximo == 2:
+        formiga.aoredor = formiga.aoredor+visao
+    proximo = get_element(matrix, formiga.x-visao, formiga.y-visao)
+    if proximo == 2:
+        formiga.aoredor = formiga.aoredor+visao
+    proximo = get_element(matrix, formiga.x-visao, formiga.y+visao)
+    if proximo == 2:
+        formiga.aoredor = formiga.aoredor+visao
+    proximo = get_element(matrix, formiga.x+visao, formiga.y-visao)
+    if proximo == 2:
+        formiga.aoredor = formiga.aoredor+visao
 
 def atualiza_folhas(folhas, matrix):
     for folha in folhas:
@@ -132,13 +133,17 @@ def move_outra_ponta(formiga, matrix, direcao):
             formiga.x = 0
             matrix[formiga.x][formiga.y] = 1
     if formiga.y == 0 and direcao == 3:
+
+
         if matrix[formiga.x][colunas-1] == 0:
             matrix[formiga.x][formiga.y] = 0
             formiga.y = colunas-1
             matrix[formiga.x][formiga.y] = 1
+
     if formiga.y == colunas-1 and direcao == 4:
-        if matrix[formiga.x][colunas-1] == 0:
-            matrix[formiga.x][0] = 0
+
+        if get_element(matrix, formiga.x, 0) == 0:
+            matrix[formiga.x][formiga.y] = 0
             formiga.y = 0
             matrix[formiga.x][formiga.y] = 1
 
@@ -151,7 +156,7 @@ def move(formigas, matrix):
             if formiga.x == 0:
 
                 move_outra_ponta(formiga, matrix, direcao)
-                get_visao(formiga, matrix)
+                get_visao(formiga, matrix_folhas)
                 decide_pegar(formiga, matrix)
                 decide_largar(formiga, matrix)
 
@@ -160,7 +165,7 @@ def move(formigas, matrix):
                     matrix[formiga.x][formiga.y] = 0
                     formiga.x = formiga.x - 1
                     matrix[formiga.x][formiga.y] = 1
-                    get_visao(formiga, matrix)
+                    get_visao(formiga, matrix_folhas)
                     decide_pegar(formiga, matrix)
                     decide_largar(formiga, matrix)
 
@@ -168,7 +173,7 @@ def move(formigas, matrix):
             if formiga.x == linhas-1:
 
                 move_outra_ponta(formiga, matrix, direcao)
-                get_visao(formiga, matrix)
+                get_visao(formiga, matrix_folhas)
                 decide_pegar(formiga, matrix)
                 decide_largar(formiga, matrix)
 
@@ -177,7 +182,7 @@ def move(formigas, matrix):
                     matrix[formiga.x][formiga.y] = 0
                     formiga.x = formiga.x + 1
                     matrix[formiga.x][formiga.y] = 1
-                    get_visao(formiga, matrix)
+                    get_visao(formiga, matrix_folhas)
                     decide_pegar(formiga, matrix)
                     decide_largar(formiga, matrix)
 
@@ -185,7 +190,7 @@ def move(formigas, matrix):
             if formiga.y == 0:
 
                 move_outra_ponta(formiga, matrix, direcao)
-                get_visao(formiga, matrix)
+                get_visao(formiga, matrix_folhas)
                 decide_pegar(formiga, matrix)
                 decide_largar(formiga, matrix)
 
@@ -194,14 +199,14 @@ def move(formigas, matrix):
                     matrix[formiga.x][formiga.y] = 0
                     formiga.y = formiga.y - 1
                     matrix[formiga.x][formiga.y] = 1
-                    get_visao(formiga, matrix)
+                    get_visao(formiga, matrix_folhas)
                     decide_pegar(formiga, matrix)
                     decide_largar(formiga, matrix)
 
         if direcao == 4:
             if formiga.y == colunas-1:
                 move_outra_ponta(formiga, matrix, direcao)
-                get_visao(formiga, matrix)
+                get_visao(formiga, matrix_folhas)
                 decide_pegar(formiga, matrix)
                 decide_largar(formiga, matrix)
 
@@ -210,33 +215,79 @@ def move(formigas, matrix):
                     matrix[formiga.x][formiga.y] = 0
                     formiga.y = formiga.y + 1
                     matrix[formiga.x][formiga.y] = 1
-                    get_visao(formiga, matrix)
+                    get_visao(formiga, matrix_folhas)
                     decide_pegar(formiga, matrix)
                     decide_largar(formiga, matrix)
 
         cont = cont+1
-        atualiza_folhas(folhas, matrix)
+        # atualiza_folhas(folhas, matrix)
 
-    visualizeGrid()
 
 
 def visualizeGrid():
     y = 0
+
+    colum_len = 0
     for row in matrix:
         x = 0  # for every row we start at the left of the screen again
+        row_len = 0
         for item in row:
+            
             if item == 0:
                 createSquare(x, y, (255, 255, 255))
             if item == 1:
                 createSquare(x, y, (0, 0, 0))
-            if item == 2:
-                createSquare(x, y, (0, 255, 0))
+            # if matrix_folhas[row_len][colum_len] == 2:
+            #     createSquare(x, y, (0, 255, 0))
             # for ever item/number in that row we move one "step" to the right
             x += grid_node_width
+            row_len = row_len+1
+        # colum_len = colum_len+1
         y += grid_node_width   # for every new row we move one "step" downwards
     pygame.display.update()
+    
+    y = 0
+    for linha_f in matrix_folhas:
+        x = 0
+        for folha in linha_f:
+              
+            if folha == 2:
+                createSquare(x, y, (0, 255, 0))
+            x += grid_node_width
 
+        y += grid_node_width
+    pygame.display.update()
 
-while True:
-    visualizeGrid()  # call the function
+aux = 0
+contf = 0
+while aux < 5000000:
+    random.seed(str(datetime.datetime.now()))
     move(formigas, matrix)
+    aux = aux + 1
+# while True:
+    visualizeGrid()  # call the function
+# for formiga in formigas:
+#     if formiga.carregando:
+#         formiga.carregando = False
+#         matrix[formiga.x][formiga.y] = 2
+
+#         for folha in folhas:
+#             if folha.carregada_por == formiga:
+#                 folha.carregada = False
+#                 folha.carregada_por = None
+#                 folha.x = formiga.x
+#                 folha.y = formiga.y
+# lena = 0
+# cola = 0
+# for linha in matrix:
+#     for elemento in linha:
+#         if elemento == 2:
+#             contf = contf+1
+
+# print("Folhas", contf)
+# print(len(folhas))
+
+# for folha in folhas:
+#     if folha.populado:
+#         cola = cola+1
+# print(cola)
